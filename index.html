@@ -3,155 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Cover Tournament</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <title>Book Cover Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
-        .cover:hover img {
-            border-color: #3B82F6; /* blue-500 */
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            background-color: #000;
+            color: #fff;
+            touch-action: manipulation;
+        }
+        #header {
+            background-color: #222;
+            color: #fff;
+            padding: 12px;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        #historyButton {
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 6px 12px;
+            font-size: 0.9em;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        #comparison {
+            display: flex;
+            flex: 1;
+            flex-direction: row;
+            gap: 8px;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .column {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .column img {
+            width: auto;
+            height: auto;
+            max-width: 100%;
+            object-fit: contain;
+            border: 1px solid #444;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        #results {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            text-align: center;
+        }
+        #podium {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 10px;
+            margin: 15px 0;
+            width: 100%;
+            max-width: 600px;
+            overflow-x: auto;
+        }
+        .podium-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .podium-step img {
+            width: auto;
+            height: auto;
+            max-width: 150px;
+            border: 2px solid;
+            border-radius: 8px;
+            animation: podiumRise 1s ease-out forwards;
+        }
+        .podium-step:nth-child(1) img {
+            border-color: #ffd700;
+            max-height: 200px;
+            animation-delay: 0.2s;
+        }
+        .podium-step:nth-child(2) img {
+            border-color: #c0c0c0;
+            max-height: 160px;
+            animation-delay: 0.4s;
+        }
+        .podium-step:nth-child(3) img {
+            border-color: #cd7f32;
+            max-height: 120px;
+            animation-delay: 0.6s;
+        }
+        .podium-step span {
+            margin-top: 5px;
+            font-size: 0.9em;
+        }
+        #results ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 300px;
+            text-align: left;
+        }
+        #results li {
+            margin: 6px 0;
+            font-size: 1em;
+        }
+        #history {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            overflow-y: auto;
+        }
+        #history ul {
+            list-style: none;
+            padding: 0;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 20px;
+        }
+        #history li {
+            margin: 6px 0;
+            font-size: 1em;
+        }
+        #chartContainer {
+            width: 100%;
+            max-width: 350px;
+            margin: 20px 0;
+        }
+        button {
+            background-color: #222;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            font-size: 1em;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        @keyframes podiumRise {
+            0% {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        @media (max-width: 600px) {
+            #header {
+                font-size: 1em;
+                padding: 10px;
+            }
+            #historyButton {
+                font-size: 0.8em;
+                padding: 5px 10px;
+            }
+            #chartContainer {
+                max-width: 90%;
+            }
+            .podium-step img {
+                max-width: 100px;
+            }
+            .podium-step:nth-child(1) img {
+                max-height: 150px;
+            }
+            .podium-step:nth-child(2) img {
+                max-height: 120px;
+            }
+            .podium-step:nth-child(3) img {
+                max-height: 90px;
+            }
         }
     </style>
 </head>
-<body class="bg-gray-100 p-4">
-    <h1 class="text-2xl font-bold text-center text-gray-800 mb-4">Book Cover Tournament</h1>
-    <div id="comparison" class="flex flex-col md:flex-row justify-around mb-4"></div>
-    <div id="progress-container" class="w-4/5 mx-auto bg-gray-200 h-5 rounded">
-        <div id="progress-bar" class="bg-green-500 h-full rounded transition-width duration-300" style="width: 0%;"></div>
+<body>
+    <div id="header">
+        <span>Progress: <span id="progress">0/136</span></span>
+        <button id="historyButton" onclick="showHistory()">History</button>
     </div>
-    <p id="progress-text" class="text-center text-gray-600 mt-2">Progress: 0/136</p>
-    <button id="see-tops" class="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer mx-auto block mt-4">See Last Tops</button>
-    <div id="tops-history" class="mt-4 hidden">
-        <h2 class="text-xl font-semibold text-gray-700">Past Tops and Answers</h2>
-    </div>
-    <div id="results" class="hidden">
-        <img id="top-cover" class="w-full h-auto mb-4 rounded shadow-lg" alt="Top cover">
-        <div class="flex flex-col md:flex-row justify-around mb-4">
-            <img id="second-cover" class="w-full md:w-5/12 h-auto mb-2 md:mb-0 rounded shadow-md" alt="2nd place">
-            <img id="third-cover" class="w-full md:w-5/12 h-auto rounded shadow-md" alt="3rd place">
+    <div id="comparison">
+        <div class="column">
+            <img id="leftImage" src="" alt="Book Cover Left" onclick="vote('left')" onerror="this.src='placeholder.jpg'">
         </div>
-        <ul id="remaining-covers" class="list-none p-0 text-gray-700"></ul>
+        <div class="column">
+            <img id="rightImage" src="" alt="Book Cover Right" onclick="vote('right')" onerror="this.src='placeholder.jpg'">
+        </div>
+    </div>
+    <div id="results">
+        <h2>Results</h2>
+        <div id="podium">
+            <div class="podium-step">
+                <img id="silverImage" src="" alt="Silver Cover" onerror="this.src='placeholder.jpg'">
+                <span id="silverLabel"></span>
+            </div>
+            <div class="podium-step">
+                <img id="goldImage" src="" alt="Gold Cover" onerror="this.src='placeholder.jpg'">
+                <span id="goldLabel"></span>
+            </div>
+            <div class="podium-step">
+                <img id="bronzeImage" src="" alt="Bronze Cover" onerror="this.src='placeholder.jpg'">
+                <span id="bronzeLabel"></span>
+            </div>
+        </div>
+        <h3>Scores</h3>
+        <ul id="scoreList"></ul>
+        <button onclick="resetComparison()">New Comparison</button>
+    </div>
+    <div id="history">
+        <h2>Top 5 Covers</h2>
+        <ul id="historyList"></ul>
+        <div id="chartContainer">
+            <canvas id="scoreChart"></canvas>
+        </div>
+        <button onclick="backToMain()">Back</button>
     </div>
 
     <script>
-        const covers = Array.from({length: 17}, (_, i) => i + 1);
-        let wins = new Array(18).fill(0); // Index 1-17 for covers
+        const totalImages = 17;
+        const comparisonsNeeded = (totalImages * (totalImages - 1)) / 2;
         let comparisons = [];
-        let currentPairIndex = 0;
-        let round = 1;
-        const pairs = [];
-        for (let i = 1; i <= 16; i++) {
-            for (let j = i + 1; j <= 17; j++) {
-                pairs.push([i, j]);
+        let currentComparison = 0;
+        let scores = Array(totalImages).fill(0);
+        let comparisonHistory = [];
+        let chartInstance = null;
+
+        function loadState() {
+            const savedScores = localStorage.getItem('bookComparisonScores');
+            const savedHistory = localStorage.getItem('bookComparisonHistory');
+            const savedCurrent = localStorage.getItem('bookComparisonCurrent');
+            if (savedScores) scores = JSON.parse(savedScores);
+            if (savedHistory) comparisonHistory = JSON.parse(savedHistory);
+            if (savedCurrent) currentComparison = parseInt(savedCurrent);
+        }
+
+        function saveState() {
+            localStorage.setItem('bookComparisonScores', JSON.stringify(scores));
+            localStorage.setItem('bookComparisonHistory', JSON.stringify(comparisonHistory));
+            localStorage.setItem('bookComparisonCurrent', currentComparison);
+        }
+
+        function generateComparisons() {
+            comparisons = [];
+            for (let i = 1; i <= totalImages; i++) {
+                for (let j = i + 1; j <= totalImages; j++) {
+                    comparisons.push([i, j]);
+                }
+            }
+            for (let i = comparisons.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [comparisons[i], comparisons[j]] = [comparisons[j], comparisons[i]];
             }
         }
-        const totalComparisons = pairs.length; // 136
 
-        function setupComparison() {
-            if (currentPairIndex >= pairs.length) {
-                if (!checkClearWinner()) {
-                    round++;
-                    currentPairIndex = 0;
-                    setupComparison();
-                } else {
-                    showResults();
-                }
+        function loadNextComparison() {
+            if (currentComparison >= comparisons.length) {
+                showResults();
                 return;
             }
-            const [a, b] = pairs[currentPairIndex];
-            showComparison(a, b);
+            const [left, right] = comparisons[currentComparison];
+            document.getElementById('leftImage').src = `${left}.jpg`;
+            document.getElementById('rightImage').src = `${right}.jpg`;
+            document.getElementById('progress').textContent = `${currentComparison + 1}/${comparisonsNeeded}`;
         }
 
-        function showComparison(a, b) {
-            const comparisonDiv = document.getElementById('comparison');
-            comparisonDiv.innerHTML = '';
-            [a, b].forEach(coverNum => {
-                const coverDiv = document.createElement('div');
-                coverDiv.className = 'cover cursor-pointer border-2 border-gray-300 rounded p-2 m-2';
-                coverDiv.dataset.cover = coverNum;
-                const img = document.createElement('img');
-                img.src = `/${coverNum}.jpg`; // Root directory, .jpg
-                img.alt = `Cover ${coverNum}`;
-                img.className = 'w-full h-auto object-contain';
-                coverDiv.appendChild(img);
-                comparisonDiv.appendChild(coverDiv);
-                coverDiv.addEventListener('click', () => handleChoice(coverNum));
-            });
-        }
-
-        function handleChoice(chosen) {
-            const [a, b] = pairs[currentPairIndex];
-            const winner = chosen;
-            const loser = chosen === a ? b : a;
-            wins[winner]++;
-            comparisons.push({ winner, loser, round });
-            currentPairIndex++;
-            updateProgress();
-            setupComparison();
-        }
-
-        function updateProgress() {
-            const progressBar = document.getElementById('progress-bar');
-            const progressText = document.getElementById('progress-text');
-            const progress = (currentPairIndex / totalComparisons) * 100;
-            progressBar.style.width = progress + '%';
-            progressText.textContent = `Progress: ${currentPairIndex}/${totalComparisons} (Round ${round})`;
-        }
-
-        function checkClearWinner() {
-            const sorted = covers
-                .map(num => ({ num, wins: wins[num] }))
-                .sort((a, b) => b.wins - a.wins || (comparisons.find(c => (c.winner === a.num && c.loser === b.num) || (c.winner === b.num && c.loser === a.num))?.winner === a.num ? -1 : 1));
-            return sorted[0].wins > sorted[1].wins; // True if top cover has more wins than second
+        function vote(side) {
+            const [left, right] = comparisons[currentComparison];
+            if (side === 'left') {
+                scores[left - 1]++;
+                comparisonHistory.push({ left, right, winner: left });
+            } else {
+                scores[right - 1]++;
+                comparisonHistory.push({ left, right, winner: right });
+            }
+            currentComparison++;
+            saveState();
+            loadNextComparison();
         }
 
         function showResults() {
-            document.getElementById('comparison').classList.add('hidden');
-            const resultsDiv = document.getElementById('results');
-            resultsDiv.classList.remove('hidden');
-            const sorted = covers
-                .map(num => ({ num, wins: wins[num] }))
-                .sort((a, b) => b.wins - a.wins || (comparisons.find(c => (c.winner === a.num && c.loser === b.num) || (c.winner === b.num && c.loser === a.num))?.winner === a.num ? -1 : 1));
-            document.getElementById('top-cover').src = `/${sorted[0].num}.jpg`;
-            if (sorted.length > 1) {
-                document.getElementById('second-cover').src = `/${sorted[1].num}.jpg`;
-            } else {
-                document.getElementById('second-cover').style.display = 'none';
-            }
-            if (sorted.length > 2) {
-                document.getElementById('third-cover').src = `/${sorted[2].num}.jpg`;
-            } else {
-                document.getElementById('third-cover').style.display = 'none';
-            }
-            const remainingList = document.getElementById('remaining-covers');
-            remainingList.innerHTML = '';
-            for (let i = 3; i < sorted.length; i++) {
+            document.getElementById('comparison').style.display = 'none';
+            document.getElementById('results').style.display = 'flex';
+            const sortedScores = scores
+                .map((score, index) => ({ index: index + 1, score }))
+                .sort((a, b) => b.score - a.score);
+            const goldIndex = sortedScores[0]?.index || 1;
+            const silverIndex = sortedScores[1]?.index || 1;
+            const bronzeIndex = sortedScores[2]?.index || 1;
+            document.getElementById('goldImage').src = `${goldIndex}.jpg`;
+            document.getElementById('silverImage').src = `${silverIndex}.jpg`;
+            document.getElementById('bronzeImage').src = `${bronzeIndex}.jpg`;
+            document.getElementById('goldLabel').textContent = `1st: ${goldIndex}.jpg (${sortedScores[0]?.score || 0} points)`;
+            document.getElementById('silverLabel').textContent = `2nd: ${silverIndex}.jpg (${sortedScores[1]?.score || 0} points)`;
+            document.getElementById('bronzeLabel').textContent = `3rd: ${bronzeIndex}.jpg (${sortedScores[2]?.score || 0} points)`;
+            const scoreList = document.getElementById('scoreList');
+            scoreList.innerHTML = '';
+            scores.forEach((score, index) => {
                 const li = document.createElement('li');
-                li.textContent = `${i + 1}th: ${sorted[i].num}.jpg`;
-                li.className = 'mb-2';
-                remainingList.appendChild(li);
-            }
-            saveResults(sorted);
-        }
-
-        function saveResults(sorted) {
-            let pastTops = JSON.parse(localStorage.getItem('pastTops')) || [];
-            pastTops.push({ sorted: sorted.map(item => item.num), comparisons, round });
-           localStorage.setItem('pastTops', JSON.stringify(pastTops));
-        }
-
-        document.getElementById('see-tops').addEventListener('click', () => {
-            const historyDiv = document.getElementById('tops-history');
-            historyDiv.innerHTML = '<h2 class="text-xl font-semibold text-gray-700">Past Tops and Answers</h2>';
-            const pastTops = JSON.parse(localStorage.getItem('pastTops')) || [];
-            pastTops.forEach((session, index) => {
-                const div = document.createElement('div');
-                div.className = 'bg-white p-4 rounded shadow mt-2';
-                div.innerHTML = `<h3 class="text-lg font-medium">Session ${index + 1} (Round ${session.round})</h3><p>Top: ${session.sorted[0]}.jpg</p><p>Comparisons made: ${session.comparisons.length}</p>`;
-                historyDiv.appendChild(div);
+                li.textContent = `${index + 1}.jpg: ${score} points`;
+                scoreList.appendChild(li);
             });
-            historyDiv.classList.remove('hidden');
-        });
+        }
 
-        setupComparison();
+        function showHistory() {
+            document.getElementById('comparison').style.display = 'none';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('history').style.display = 'flex';
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            const sortedScores = scores
+                .map((score, index) => ({ index: index + 1, score }))
+                .sort((a, b) => b.score - a.score)
+                .slice(0, 5);
+            sortedScores.forEach((item, rank) => {
+                const li = document.createElement('li');
+                li.textContent = `Rank ${rank + 1}: ${item.index}.jpg (${item.score} points)`;
+                historyList.appendChild(li);
+            });
+            if (currentComparison >= comparisons.length && !chartInstance) {
+                const ctx = document.getElementById('scoreChart').getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: Array.from({ length: totalImages }, (_, i) => `${i + 1}.jpg`),
+                        datasets: [{
+                            label: 'Points',
+                            data: scores,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: '#444',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { ticks: { color: '#fff', font: { size: 10 } } },
+                            y: { beginAtZero: true, ticks: { color: '#fff', stepSize: 1 } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function backToMain() {
+            document.getElementById('history').style.display = 'none';
+            if (currentComparison >= comparisons.length) {
+                showResults();
+            } else {
+                document.getElementById('comparison').style.display = 'flex';
+            }
+        }
+
+        function resetComparison() {
+            localStorage.removeItem('bookComparisonScores');
+            localStorage.removeItem('bookComparisonHistory');
+            localStorage.removeItem('bookComparisonCurrent');
+            scores = Array(totalImages).fill(0);
+            comparisonHistory = [];
+            currentComparison = 0;
+            document.getElementById('comparison').style.display = 'flex';
+            document.getElementById('results').style.display = 'none';
+            document.getElementById('history').style.display = 'none';
+            if (chartInstance) {
+                chartInstance.destroy();
+                chartInstance = null;
+            }
+            generateComparisons();
+            loadNextComparison();
+        }
+
+        loadState();
+        if (comparisonHistory.length === 0) {
+            generateComparisons();
+        } else if (currentComparison >= comparisons.length) {
+            showResults();
+        }
+        loadNextComparison();
     </script>
 </body>
 </html>
