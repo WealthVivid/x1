@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Результати</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: #000;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .photo-item {
+      text-align: center;
+      position: relative;
+    }
+
+    .image-wrapper img {
+      width: 100%;
+      height: auto;
+      border-radius: 8px;
+      border: 2px solid #444;
+    }
+
+    .first-place img {
+      border: 3px solid #ffd700;
+    }
+
+    .photo-item p {
+      margin: 5px 0 0;
+      font-size: 0.9em;
+      color: #4bc0c0;
+    }
+
+    .fullscreen-btn {
+      display: inline-block;
+      margin-top: 5px;
+      padding: 4px 10px;
+      font-size: 0.75em;
+      color: white;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(4px);
+      border: 1px solid #4bc0c0;
+      border-radius: 4px;
+      cursor: pointer;
+      transform: skew(-10deg);
+      transition: background 0.3s;
+    }
+
+    .fullscreen-btn:hover {
+      background: rgba(75, 192, 192, 0.2);
+    }
+
+    .thank-you {
+      margin-top: 20px;
+      font-size: 1em;
+      color: #4bc0c0;
+      text-align: center;
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      }
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(5px);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal img {
+      max-width: 90vw;
+      max-height: 90vh;
+      border-radius: 8px;
+      border: 2px solid #4bc0c0;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 2rem;
+      color: #fff;
+      cursor: pointer;
+      background: transparent;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <h2>Результати Голосувань</h2>
+  <div class="grid">
+
+    <!-- 1 -->
+    <div class="photo-item first-place">
+      <div class="image-wrapper"><img src="7.jpg" alt="Фото" /></div>
+      <p>1 місце: Отримано 126 балів (+46% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 2 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="16.jpg" alt="Фото" /></div>
+      <p>2 місце: Отримано 120 балів (+40% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 3 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="5.jpg" alt="Фото" /></div>
+      <p>3 місце: Отримано 111 балів (+31% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 4 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="13.jpg" alt="Фото" /></div>
+      <p>4 місце: Отримано 104 бали (+24% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 5 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="14.jpg" alt="Фото" /></div>
+      <p>5 місце: Отримано 92 бали (+12% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 6 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="2.jpg" alt="Фото" /></div>
+      <p>6 місце: Отримано 92 бали (+12% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 7 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="6.jpg" alt="Фото" /></div>
+      <p>7 місце: Отримано 81 бали (+1% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 8 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="1.jpg" alt="Фото" /></div>
+      <p>8 місце: Отримано 83 бали (-6% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 9 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="9.jpg" alt="Фото" /></div>
+      <p>9 місце: Отримано 76 бали (-4% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 10 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="3.jpg" alt="Фото" /></div>
+      <p>10 місце: Отримано 74 бали (-6% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 11 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="10.jpg" alt="Фото" /></div>
+      <p>11 місце: Отримано 70 бали (-10% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 12 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="4.jpg" alt="Фото" /></div>
+      <p>12 місце: Отримано 71 бали (-9% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 13 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="12.jpg" alt="Фото" /></div>
+      <p>13 місце: Отримано 63 бали (-17% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 14 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="8.jpg" alt="Фото" /></div>
+      <p>14 місце: Отримано 62 бали (-18% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 15 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="11.jpg" alt="Фото" /></div>
+      <p>15 місце: Отримано 47 балів (-33% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 16 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="17.jpg" alt="Фото" /></div>
+      <p>16 місце: Отримано 47 балів (-33% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+
+    <!-- 17 -->
+    <div class="photo-item">
+      <div class="image-wrapper"><img src="15.jpg" alt="Фото" /></div>
+      <p>17 місце: Отримано 41 бали (-39% від середнього)</p>
+      <button class="fullscreen-btn" onclick="відкритиМодальне(this)">На весь екран</button>
+    </div>
+  </div>
+
+  <p class="thank-you">Дякую за участь та час</p>
+
+  <!-- Modal -->
+  <div id="modal" class="modal" onclick="закритиМодальне()">
+    <button class="modal-close" onclick="закритиМодальне(event)">×</button>
+    <img id="modal-img" src="" alt="Модальне фото" />
+  </div>
+
+  <script>
+    function відкритиМодальне(button) {
+      const img = button.parentElement.querySelector("img");
+      const modal = document.getElementById("modal");
+      const modalImg = document.getElementById("modal-img");
+
+      modalImg.src = img.src;
+      modal.style.display = "flex";
+    }
+
+    function закритиМодальне(e) {
+      if (e) e.stopPropagation();
+      document.getElementById("modal").style.display = "none";
+    }
+  </script>
+</body>
+</html>
