@@ -25,6 +25,22 @@
             justify-content: space-between;
             align-items: center;
         }
+        #progressContainer {
+            flex: 1;
+            margin: 0 10px;
+        }
+        #progressBar {
+            width: 100%;
+            height: 10px;
+            background-color: #444;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        #progressFill {
+            height: 100%;
+            background-color: #4bc0c0;
+            transition: width 0.3s ease;
+        }
         #historyButton {
             background-color: #444;
             color: #fff;
@@ -57,7 +73,6 @@
             border-radius: 8px;
             cursor: pointer;
         }
-
         #results {
             display: none;
             flex-direction: column;
@@ -190,6 +205,11 @@
 <body>
     <div id="header">
         <span>Progress: <span id="progress">0/136</span></span>
+        <div id="progressContainer">
+            <div id="progressBar">
+                <div id="progressFill" style="width: 0%;"></div>
+            </div>
+        </div>
         <button id="historyButton" onclick="showHistory()">History</button>
     </div>
     <div id="comparison">
@@ -238,6 +258,7 @@
         let comparisonHistory = [];
         let chartInstance = null;
 
+        // Load saved state from localStorage
         function loadState() {
             const savedScores = localStorage.getItem('bookComparisonScores');
             const savedHistory = localStorage.getItem('bookComparisonHistory');
@@ -247,12 +268,14 @@
             if (savedCurrent) currentComparison = parseInt(savedCurrent);
         }
 
+        // Save current state to localStorage
         function saveState() {
             localStorage.setItem('bookComparisonScores', JSON.stringify(scores));
             localStorage.setItem('bookComparisonHistory', JSON.stringify(comparisonHistory));
             localStorage.setItem('bookComparisonCurrent', currentComparison);
         }
 
+        // Generate all possible image comparisons and shuffle them
         function generateComparisons() {
             comparisons = [];
             for (let i = 1; i <= totalImages; i++) {
@@ -266,6 +289,7 @@
             }
         }
 
+        // Load the next pair of images for comparison
         function loadNextComparison() {
             if (currentComparison >= comparisons.length) {
                 showResults();
@@ -275,8 +299,10 @@
             document.getElementById('leftImage').src = `${left}.jpg`;
             document.getElementById('rightImage').src = `${right}.jpg`;
             document.getElementById('progress').textContent = `${currentComparison + 1}/${comparisonsNeeded}`;
+            document.getElementById('progressFill').style.width = `${((currentComparison + 1) / comparisonsNeeded) * 100}%`;
         }
 
+        // Record vote and proceed to next comparison
         function vote(side) {
             const [left, right] = comparisons[currentComparison];
             if (side === 'left') {
@@ -291,6 +317,7 @@
             loadNextComparison();
         }
 
+        // Display final results with top 3 covers
         function showResults() {
             document.getElementById('comparison').style.display = 'none';
             document.getElementById('results').style.display = 'flex';
@@ -315,6 +342,7 @@
             });
         }
 
+        // Show history with top 5 covers and score chart
         function showHistory() {
             document.getElementById('comparison').style.display = 'none';
             document.getElementById('results').style.display = 'none';
@@ -357,6 +385,7 @@
             }
         }
 
+        // Return to main comparison or results view
         function backToMain() {
             document.getElementById('history').style.display = 'none';
             if (currentComparison >= comparisons.length) {
@@ -366,6 +395,7 @@
             }
         }
 
+        // Reset the comparison process
         function resetComparison() {
             localStorage.removeItem('bookComparisonScores');
             localStorage.removeItem('bookComparisonHistory');
@@ -384,6 +414,7 @@
             loadNextComparison();
         }
 
+        // Initialize the application
         loadState();
         if (comparisonHistory.length === 0) {
             generateComparisons();
