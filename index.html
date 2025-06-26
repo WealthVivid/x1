@@ -135,7 +135,7 @@
         function saveResults(sorted) {
             let pastTops = JSON.parse(localStorage.getItem('pastTops')) || [];
             pastTops.push({ sorted: sorted.map(item => item.num), comparisons, round });
- mẹ            localStorage.setItem('pastTops', JSON.stringify(pastTops));
+           localStorage.setItem('pastTops', JSON.stringify(pastTops));
         }
 
         document.getElementById('see-tops').addEventListener('click', () => {
