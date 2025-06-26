@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Book Cover Comparison</title>
+    <title>Порівняння обкладинок книг</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <style>
         body {
@@ -126,7 +126,10 @@
             list-style: none;
             padding: 0;
             width: 100%;
-            max-width: 300px;
+            max-width: 500px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
             text-align: left;
         }
         #results li {
@@ -165,6 +168,30 @@
             border-radius: 6px;
             cursor: pointer;
         }
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .spinner {
+            border: 4px solid #444;
+            border-top: 4px solid #4bc0c0;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
         @keyframes podiumRise {
             0% {
                 transform: translateY(50px);
@@ -199,54 +226,61 @@
             .podium-step:nth-child(3) img {
                 max-height: 90px;
             }
+            #results ul {
+                grid-template-columns: 1fr;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
 <body>
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
     <div id="header">
-        <span>Progress: <span id="progress">0/136</span></span>
+        <span>Прогрес: <span id="progress">0/136</span></span>
         <div id="progressContainer">
             <div id="progressBar">
                 <div id="progressFill" style="width: 0%;"></div>
             </div>
         </div>
-        <button id="historyButton" onclick="showHistory()">History</button>
+        <button id="historyButton" onclick="showHistory()">Історія</button>
     </div>
     <div id="comparison">
         <div class="column">
-            <img id="leftImage" src="" alt="Book Cover Left" onclick="vote('left')" onerror="this.src='placeholder.jpg'">
+            <img id="leftImage" src="" alt="Обкладинка книги ліворуч" onclick="vote('left')" onerror="this.src='placeholder.jpg'">
         </div>
         <div class="column">
-            <img id="rightImage" src="" alt="Book Cover Right" onclick="vote('right')" onerror="this.src='placeholder.jpg'">
+            <img id="rightImage" src="" alt="Обкладинка книги праворуч" onclick="vote('right')" onerror="this.src='placeholder.jpg'">
         </div>
     </div>
     <div id="results">
-        <h2>Results</h2>
+        <h2>Результати</h2>
         <div id="podium">
             <div class="podium-step">
-                <img id="silverImage" src="" alt="Silver Cover" onerror="this.src='placeholder.jpg'">
+                <img id="silverImage" src="" alt="Срібна обкладинка" onerror="this.src='placeholder.jpg'">
                 <span id="silverLabel"></span>
             </div>
             <div class="podium-step">
-                <img id="goldImage" src="" alt="Gold Cover" onerror="this.src='placeholder.jpg'">
+                <img id="goldImage" src="" alt="Золота обкладинка" onerror="this.src='placeholder.jpg'">
                 <span id="goldLabel"></span>
             </div>
             <div class="podium-step">
-                <img id="bronzeImage" src="" alt="Bronze Cover" onerror="this.src='placeholder.jpg'">
+                <img id="bronzeImage" src="" alt="Бронзова обкладинка" onerror="this.src='placeholder.jpg'">
                 <span id="bronzeLabel"></span>
             </div>
         </div>
-        <h3>Scores</h3>
+        <h3>Бали</h3>
         <ul id="scoreList"></ul>
-        <button onclick="resetComparison()">New Comparison</button>
+        <button onclick="resetComparison()">Нове порівняння</button>
     </div>
     <div id="history">
-        <h2>Top 5 Covers</h2>
+        <h2>Топ 5 обкладинок</h2>
         <ul id="historyList"></ul>
         <div id="chartContainer">
             <canvas id="scoreChart"></canvas>
         </div>
-        <button onclick="backToMain()">Back</button>
+        <button onclick="backToMain()">Назад</button>
     </div>
 
     <script>
@@ -257,6 +291,24 @@
         let scores = Array(totalImages).fill(0);
         let comparisonHistory = [];
         let chartInstance = null;
+
+        // Preload all images before starting
+        function preloadImages(callback) {
+            let loadedImages = 0;
+            const images = Array.from({ length: totalImages }, (_, i) => `${i + 1}.jpg`);
+            images.push('placeholder.jpg');
+            images.forEach(src => {
+                const img = new Image();
+                img.src = src;
+                img.onload = img.onerror = () => {
+                    loadedImages++;
+                    if (loadedImages === images.length) {
+                        document.getElementById('loader').style.display = 'none';
+                        callback();
+                    }
+                };
+            });
+        }
 
         // Load saved state from localStorage
         function loadState() {
@@ -330,14 +382,14 @@
             document.getElementById('goldImage').src = `${goldIndex}.jpg`;
             document.getElementById('silverImage').src = `${silverIndex}.jpg`;
             document.getElementById('bronzeImage').src = `${bronzeIndex}.jpg`;
-            document.getElementById('goldLabel').textContent = `1st: ${goldIndex}.jpg (${sortedScores[0]?.score || 0} points)`;
-            document.getElementById('silverLabel').textContent = `2nd: ${silverIndex}.jpg (${sortedScores[1]?.score || 0} points)`;
-            document.getElementById('bronzeLabel').textContent = `3rd: ${bronzeIndex}.jpg (${sortedScores[2]?.score || 0} points)`;
+            document.getElementById('goldLabel').textContent = `1-ше: ${goldIndex}.jpg (${sortedScores[0]?.score || 0} балів)`;
+            document.getElementById('silverLabel').textContent = `2-ге: ${silverIndex}.jpg (${sortedScores[1]?.score || 0} балів)`;
+            document.getElementById('bronzeLabel').textContent = `3-тє: ${bronzeIndex}.jpg (${sortedScores[2]?.score || 0} балів)`;
             const scoreList = document.getElementById('scoreList');
             scoreList.innerHTML = '';
             scores.forEach((score, index) => {
                 const li = document.createElement('li');
-                li.textContent = `${index + 1}.jpg: ${score} points`;
+                li.textContent = `${index + 1}.jpg: ${score} балів`;
                 scoreList.appendChild(li);
             });
         }
@@ -355,7 +407,7 @@
                 .slice(0, 5);
             sortedScores.forEach((item, rank) => {
                 const li = document.createElement('li');
-                li.textContent = `Rank ${rank + 1}: ${item.index}.jpg (${item.score} points)`;
+                li.textContent = `Ранг ${rank + 1}: ${item.index}.jpg (${item.score} балів)`;
                 historyList.appendChild(li);
             });
             if (currentComparison >= comparisons.length && !chartInstance) {
@@ -365,7 +417,7 @@
                     data: {
                         labels: Array.from({ length: totalImages }, (_, i) => `${i + 1}.jpg`),
                         datasets: [{
-                            label: 'Points',
+                            label: 'Бали',
                             data: scores,
                             backgroundColor: 'rgba(75, 192, 192, 0.6)',
                             borderColor: '#444',
@@ -414,14 +466,16 @@
             loadNextComparison();
         }
 
-        // Initialize the application
-        loadState();
-        if (comparisonHistory.length === 0) {
-            generateComparisons();
-        } else if (currentComparison >= comparisons.length) {
-            showResults();
-        }
-        loadNextComparison();
+        // Initialize the application after preloading images
+        preloadImages(() => {
+            loadState();
+            if (comparisonHistory.length === 0) {
+                generateComparisons();
+            } else if (currentComparison >= comparisons.length) {
+                showResults();
+            }
+            loadNextComparison();
+        });
     </script>
 </body>
 </html>
