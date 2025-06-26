@@ -1,137 +1,63 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Book Cover Tournament</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 10px;
-            text-align: center;
-        }
-        .comparison {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-        }
-        .cover {
-            cursor: pointer;
-            max-width: 45%;
-        }
-        .cover img {
-            width: 100%;
-            height: auto;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-        }
         .cover:hover img {
-            border-color: #00f;
-        }
-        #progress-bar {
-            width: 0%;
-            height: 20px;
-            background-color: #4CAF50;
-            transition: width 0.3s;
-        }
-        #progress-container {
-            width: 80%;
-            background-color: #ddd;
-            margin: 10px auto;
-        }
-        #results img.top {
-            width: 100%;
-            height: auto;
-            margin-bottom: 10px;
-        }
-        #results .runner-up {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 10px;
-        }
-        #results .runner-up img {
-            width: 45%;
-            height: auto;
-        }
-        #results ul {
-            list-style: none;
-            padding: 0;
-        }
-        #results li {
-            margin: 5px 0;
-        }
-        #tops-history {
-            margin-top: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-        }
-        @media (max-width: 599px) {
-            .comparison {
-                flex-direction: column;
-                align-items: center;
-            }
-            .cover {
-                max-width: 80%;
-                margin-bottom: 10px;
-            }
-            #results .runner-up {
-                flex-direction: column;
-                align-items: center;
-            }
-            #results .runner-up img {
-                width: 80%;
-                margin-bottom: 10px;
-            }
+            border-color: #3B82F6; /* blue-500 */
         }
     </style>
 </head>
-<body>
-    <h1>Book Cover Tournament</h1>
-    <div id="comparison"></div>
-    <div id="progress-container">
-        <div id="progress-bar"></div>
+<body class="bg-gray-100 p-4">
+    <h1 class="text-2xl font-bold text-center text-gray-800 mb-4">Book Cover Tournament</h1>
+    <div id="comparison" class="flex flex-col md:flex-row justify-around mb-4"></div>
+    <div id="progress-container" class="w-4/5 mx-auto bg-gray-200 h-5 rounded">
+        <div id="progress-bar" class="bg-green-500 h-full rounded transition-width duration-300" style="width: 0%;"></div>
     </div>
-    <p id="progress-text">Progress: 0/17</p>
-    <button id="see-tops">See Last Tops</button>
-    <div id="tops-history" style="display:none;"></div>
-    <div id="results" style="display:none;"></div>
+    <p id="progress-text" class="text-center text-gray-600 mt-2">Progress: 0/136</p>
+    <button id="see-tops" class="bg-blue-500 text-white py-2 px-4 rounded cursor-pointer mx-auto block mt-4">See Last Tops</button>
+    <div id="tops-history" class="mt-4 hidden">
+        <h2 class="text-xl font-semibold text-gray-700">Past Tops and Answers</h2>
+    </div>
+    <div id="results" class="hidden">
+        <img id="top-cover" class="w-full h-auto mb-4 rounded shadow-lg" alt="Top cover">
+        <div class="flex flex-col md:flex-row justify-around mb-4">
+            <img id="second-cover" class="w-full md:w-5/12 h-auto mb-2 md:mb-0 rounded shadow-md" alt="2nd place">
+            <img id="third-cover" class="w-full md:w-5/12 h-auto rounded shadow-md" alt="3rd place">
+        </div>
+        <ul id="remaining-covers" class="list-none p-0 text-gray-700"></ul>
+    </div>
 
     <script>
         const covers = Array.from({length: 17}, (_, i) => i + 1);
-        let sortedList = [];
-        let currentInsertion = 0;
-        let left, right, mid;
+        let wins = new Array(18).fill(0); // Index 1-17 for covers
         let comparisons = [];
-
-        function setupComparison() {
-            if (currentInsertion >= covers.length) {
-                showResults();
-                return;
-            }
-            if (sortedList.length === 0) {
-                sortedList.push(covers[currentInsertion]);
-                currentInsertion++;
-                updateProgress();
-                setupComparison();
-            } else {
-                left = 0;
-                right = sortedList.length;
-                binarySearchStep();
+        let currentPairIndex = 0;
+        let round = 1;
+        const pairs = [];
+        for (let i = 1; i <= 16; i++) {
+            for (let j = i + 1; j <= 17; j++) {
+                pairs.push([i, j]);
             }
         }
+        const totalComparisons = pairs.length; // 136
 
-        function binarySearchStep() {
-            if (left >= right) {
-                sortedList.splice(left, 0, covers[currentInsertion]);
-                currentInsertion++;
-                updateProgress();
-                setupComparison();
-            } else {
-                mid = Math.floor((left + right) / 2);
-                showComparison(covers[currentInsertion], sortedList[mid]);
+        function setupComparison() {
+            if (currentPairIndex >= pairs.length) {
+                if (!checkClearWinner()) {
+                    round++;
+                    currentPairIndex = 0;
+                    setupComparison();
+                } else {
+                    showResults();
+                }
+                return;
             }
+            const [a, b] = pairs[currentPairIndex];
+            showComparison(a, b);
         }
 
         function showComparison(a, b) {
@@ -139,11 +65,12 @@
             comparisonDiv.innerHTML = '';
             [a, b].forEach(coverNum => {
                 const coverDiv = document.createElement('div');
-                coverDiv.className = 'cover';
+                coverDiv.className = 'cover cursor-pointer border-2 border-gray-300 rounded p-2 m-2';
                 coverDiv.dataset.cover = coverNum;
                 const img = document.createElement('img');
-                img.src = `images/${coverNum}.jpg`;
+                img.src = `/${coverNum}.jpg`; // Root directory, .jpg
                 img.alt = `Cover ${coverNum}`;
+                img.className = 'w-full h-auto object-contain';
                 coverDiv.appendChild(img);
                 comparisonDiv.appendChild(coverDiv);
                 coverDiv.addEventListener('click', () => handleChoice(coverNum));
@@ -151,70 +78,77 @@
         }
 
         function handleChoice(chosen) {
-            const newCover = covers[currentInsertion];
-            const midCover = sortedList[mid];
-            comparisons.push({ winner: chosen, loser: chosen === newCover ? midCover : newCover });
-            if (chosen === newCover) {
-                right = mid;
-            } else {
-                left = mid + 1;
-            }
-            binarySearchStep();
+            const [a, b] = pairs[currentPairIndex];
+            const winner = chosen;
+            const loser = chosen === a ? b : a;
+            wins[winner]++;
+            comparisons.push({ winner, loser, round });
+            currentPairIndex++;
+            updateProgress();
+            setupComparison();
         }
 
         function updateProgress() {
             const progressBar = document.getElementById('progress-bar');
             const progressText = document.getElementById('progress-text');
-            const progress = (sortedList.length / 17) * 100;
+            const progress = (currentPairIndex / totalComparisons) * 100;
             progressBar.style.width = progress + '%';
-            progressText.textContent = `Progress: ${sortedList.length}/17`;
+            progressText.textContent = `Progress: ${currentPairIndex}/${totalComparisons} (Round ${round})`;
+        }
+
+        function checkClearWinner() {
+            const sorted = covers
+                .map(num => ({ num, wins: wins[num] }))
+                .sort((a, b) => b.wins - a.wins || (comparisons.find(c => (c.winner === a.num && c.loser === b.num) || (c.winner === b.num && c.loser === a.num))?.winner === a.num ? -1 : 1));
+            return sorted[0].wins > sorted[1].wins; // True if top cover has more wins than second
         }
 
         function showResults() {
-            document.getElementById('comparison').style.display = 'none';
+            document.getElementById('comparison').classList.add('hidden');
             const resultsDiv = document.getElementById('results');
-            resultsDiv.innerHTML = '';
-            const topImg = document.createElement('img');
-            topImg.src = `images/${sortedList[0]}.jpg`;
-            topImg.className = 'top';
-            topImg.alt = 'Top cover';
-            resultsDiv.appendChild(topImg);
-            const runnerUpDiv = document.createElement('div');
-            runnerUpDiv.className = 'runner-up';
-            for (let i = 1; i < 3 && i < sortedList.length; i++) {
-                const img = document.createElement('img');
-                img.src = `images/${sortedList[i]}.jpg`;
-                img.alt = `${i + 1}th place`;
-                runnerUpDiv.appendChild(img);
+            resultsDiv.classList.remove('hidden');
+            const sorted = covers
+                .map(num => ({ num, wins: wins[num] }))
+                .sort((a, b) => b.wins - a.wins || (comparisons.find(c => (c.winner === a.num && c.loser === b.num) || (c.winner === b.num && c.loser === a.num))?.winner === a.num ? -1 : 1));
+            document.getElementById('top-cover').src = `/${sorted[0].num}.jpg`;
+            if (sorted.length > 1) {
+                document.getElementById('second-cover').src = `/${sorted[1].num}.jpg`;
+            } else {
+                document.getElementById('second-cover').style.display = 'none';
             }
-            resultsDiv.appendChild(runnerUpDiv);
-            const list = document.createElement('ul');
-            for (let i = 3; i < sortedList.length; i++) {
+            if (sorted.length > 2) {
+                document.getElementById('third-cover').src = `/${sorted[2].num}.jpg`;
+            } else {
+                document.getElementById('third-cover').style.display = 'none';
+            }
+            const remainingList = document.getElementById('remaining-covers');
+            remainingList.innerHTML = '';
+            for (let i = 3; i < sorted.length; i++) {
                 const li = document.createElement('li');
-                li.textContent = `${i + 1}th: ${sortedList[i]}.jpg`;
-                list.appendChild(li);
+                li.textContent = `${i + 1}th: ${sorted[i].num}.jpg`;
+                li.className = 'mb-2';
+                remainingList.appendChild(li);
             }
-            resultsDiv.appendChild(list);
-            resultsDiv.style.display = 'block';
-            saveResults();
+            saveResults(sorted);
         }
 
-        function saveResults() {
+        function saveResults(sorted) {
             let pastTops = JSON.parse(localStorage.getItem('pastTops')) || [];
-            pastTops.push({ sortedList: [...sortedList], comparisons: [...comparisons] });
-            localStorage.setItem('pastTops', JSON.stringify(pastTops));
+            pastTops.push({ sorted: sorted.map(item => item.num), comparisons, round });
+ mẹ            localStorage.setItem('pastTops', JSON.stringify(pastTops));
         }
 
- slain document.getElementById('see-tops').addEventListener('click', () => {
+        document.getElementById('see-tops').addEventListener('click', () => {
             const historyDiv = document.getElementById('tops-history');
-            historyDiv.innerHTML = '<h2>Past Tops and Answers</h2>';
+            historyDiv.innerHTML = '<h2 class="text-xl font-semibold text-gray-700">Past Tops and Answers</h2>';
             const pastTops = JSON.parse(localStorage.getItem('pastTops')) || [];
             pastTops.forEach((session, index) => {
                 const div = document.createElement('div');
-                div.innerHTML = `<h3>Session ${index + 1}</h3><p>Top: ${session.sortedList[0]}.jpg</p><p>Comparisons made: ${session.comparisons.length}</p>`;
+                div.className = 'bg-white p-4 rounded shadow mt-2';
+                div.innerHTML = `<h3 class="text-lg font-medium">Session ${index + 1} (Round ${session.round})</h3><p>Top: ${session.sorted[0]}.jpg</p><p>Comparisons made: ${session.comparisons.length}</p>`;
                 historyDiv.appendChild(div);
             });
-            historyDiv.style.display = 'block';
+            historyDiv.classList.remove('hidden');
         });
 
         setupComparison();
