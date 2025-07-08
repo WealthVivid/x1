@@ -1,0 +1,439 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { Moon, Sun, Settings, Download, Copy, Trash2, Code, ChevronDown, Check } from 'lucide-react';
+
+const CodeCommentsCleaner = () => {
+  const [darkMode, setDarkMode] = useState(false);
+  const [inputCode, setInputCode] = useState('');
+  const [outputCode, setOutputCode] = useState('');
+  const [selectedLanguage, setSelectedLanguage] = useState('auto');
+  const [showSettings, setShowSettings] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef(null);
+  const [settings, setSettings] = useState({
+    removeSingleLine: true,
+    removeMultiLine: true,
+    removeDocstrings: false,
+    preserveHeaders: true,
+    preserveInlineComments: false,
+    customPatterns: '',
+    minifyWhitespace: false,
+    preserveIndentation: true
+  });
+
+  // Auto-detect system theme and listen for changes
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    setDarkMode(mediaQuery.matches);
+    
+    const handleChange = (e) => {
+      setDarkMode(e.matches);
+    };
+    
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setShowDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // Language configurations
+  const languages = {
+    auto: { name: 'Auto Detect', single: ['//', '#'], multi: [['/*', '*/'], ['"""', '"""'], ["'''", "'"]], docstring: ['"""', "'''"] },
+    javascript: { name: 'JavaScript/TypeScript', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    python: { name: 'Python', single: ['#'], multi: [['"""', '"""'], ["'''", "'"]], docstring: ['"""', "'''"] },
+    java: { name: 'Java', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    cpp: { name: 'C/C++', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    csharp: { name: 'C#', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    php: { name: 'PHP', single: ['//', '#'], multi: [['/*', '*/']], docstring: [] },
+    ruby: { name: 'Ruby', single: ['#'], multi: [['=begin', '=end']], docstring: [] },
+    go: { name: 'Go', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    rust: { name: 'Rust', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    swift: { name: 'Swift', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    kotlin: { name: 'Kotlin', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+    html: { name: 'HTML', single: [], multi: [['<!--', '-->']], docstring: [] },
+    css: { name: 'CSS', single: [], multi: [['/*', '*/']], docstring: [] },
+    sql: { name: 'SQL', single: ['--'], multi: [['/*', '*/']], docstring: [] },
+    bash: { name: 'Bash/Shell', single: ['#'], multi: [], docstring: [] },
+    powershell: { name: 'PowerShell', single: ['#'], multi: [['<#', '#>']], docstring: [] }
+  };
+
+  // Custom Dropdown Component
+  const CustomDropdown = ({ value, onChange, options, placeholder }) => {
+    const selectedOption = options.find(opt => opt.value === value);
+    
+    return (
+      <div className="relative" ref={dropdownRef}>
+        <button
+          onClick={() => setShowDropdown(!showDropdown)}
+          className="w-full min-w-48 p-3 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-left flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          <span>{selectedOption?.label || placeholder}</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+        </button>
+        
+        {showDropdown && (
+          <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg max-h-60 overflow-y-auto z-10">
+            {options.map((option) => (
+              <button
+                key={option.value}
+                onClick={() => {
+                  onChange(option.value);
+                  setShowDropdown(false);
+                }}
+                className="w-full p-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center justify-between"
+              >
+                <span>{option.label}</span>
+                {value === option.value && <Check className="w-4 h-4 text-blue-600 dark:text-blue-400" />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Auto-detect language
+  const detectLanguage = (code) => {
+    if (code.includes('<?php')) return 'php';
+    if (code.includes('def ') && code.includes(':')) return 'python';
+    if (code.includes('function') && code.includes('{')) return 'javascript';
+    if (code.includes('public class')) return 'java';
+    if (code.includes('#include')) return 'cpp';
+    if (code.includes('using System')) return 'csharp';
+    if (code.includes('<!DOCTYPE') || code.includes('<html')) return 'html';
+    if (code.includes('SELECT') || code.includes('FROM')) return 'sql';
+    if (code.includes('#!/bin/bash')) return 'bash';
+    return 'auto';
+  };
+
+  // Clean comments function
+  const cleanComments = () => {
+    if (!inputCode.trim()) {
+      setOutputCode('');
+      return;
+    }
+
+    let result = inputCode;
+    const lang = selectedLanguage === 'auto' ? detectLanguage(inputCode) : selectedLanguage;
+    const config = languages[lang] || languages.auto;
+
+    try {
+      // Remove single-line comments
+      if (settings.removeSingleLine) {
+        config.single.forEach(pattern => {
+          if (settings.preserveInlineComments) {
+            const regex = new RegExp(`^(\\s*)${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*$`, 'gm');
+            result = result.replace(regex, '');
+          } else {
+            const regex = new RegExp(`${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*$`, 'gm');
+            result = result.replace(regex, '');
+          }
+        });
+      }
+
+      // Remove multi-line comments
+      if (settings.removeMultiLine) {
+        config.multi.forEach(([start, end]) => {
+          if (settings.removeDocstrings || !config.docstring.includes(start)) {
+            const regex = new RegExp(
+              `${start.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${end.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+              'g'
+            );
+            result = result.replace(regex, '');
+          }
+        });
+      }
+
+      // Remove docstrings specifically
+      if (settings.removeDocstrings) {
+        config.docstring.forEach(pattern => {
+          const regex = new RegExp(
+            `${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+            'g'
+          );
+          result = result.replace(regex, '');
+        });
+      }
+
+      // Apply custom patterns
+      if (settings.customPatterns) {
+        try {
+          const customRegex = new RegExp(settings.customPatterns, 'gm');
+          result = result.replace(customRegex, '');
+        } catch (e) {
+          console.warn('Invalid custom regex pattern');
+        }
+      }
+
+      // Clean up empty lines and whitespace
+      if (settings.minifyWhitespace) {
+        result = result.replace(/\n\s*\n/g, '\n').trim();
+      } else {
+        result = result.replace(/^\s*\n/gm, '');
+      }
+
+      // Preserve indentation
+      if (!settings.preserveIndentation) {
+        result = result.replace(/^[ \t]+/gm, '');
+      }
+
+      setOutputCode(result);
+    } catch (error) {
+      console.error('Error cleaning comments:', error);
+      setOutputCode('Error processing code. Please check your input.');
+    }
+  };
+
+  // Handle input change
+  const handleInputChange = (e) => {
+    setInputCode(e.target.value);
+  };
+
+  // Copy to clipboard
+  const copyToClipboard = () => {
+    navigator.clipboard.writeText(outputCode);
+  };
+
+  // Download as file
+  const downloadFile = () => {
+    const blob = new Blob([outputCode], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'cleaned_code.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Clear all
+  const clearAll = () => {
+    setInputCode('');
+    setOutputCode('');
+  };
+
+  const theme = darkMode ? 'dark' : '';
+
+  const languageOptions = Object.entries(languages).map(([key, lang]) => ({
+    value: key,
+    label: lang.name
+  }));
+
+  return (
+    <div className={`min-h-screen transition-colors duration-300 ${theme}`}>
+      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        {/* Header */}
+        <div className="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+          <div className="max-w-7xl mx-auto px-6 py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-4">
+                <Code className="w-8 h-8 text-blue-600 dark:text-blue-400" />
+                <h1 className="text-2xl font-bold">Code Comments Cleaner</h1>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className="p-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+                <button
+                  onClick={() => setDarkMode(!darkMode)}
+                  className="p-3 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors"
+                >
+                  {darkMode ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-6 py-8">
+          {/* Settings Panel */}
+          {showSettings && (
+            <div className="mb-8 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold mb-6">Settings</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.removeSingleLine}
+                    onChange={(e) => setSettings({...settings, removeSingleLine: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Remove single-line comments</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.removeMultiLine}
+                    onChange={(e) => setSettings({...settings, removeMultiLine: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Remove multi-line comments</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.removeDocstrings}
+                    onChange={(e) => setSettings({...settings, removeDocstrings: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Remove docstrings</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.preserveHeaders}
+                    onChange={(e) => setSettings({...settings, preserveHeaders: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Preserve header comments</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.preserveInlineComments}
+                    onChange={(e) => setSettings({...settings, preserveInlineComments: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Preserve inline comments</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.minifyWhitespace}
+                    onChange={(e) => setSettings({...settings, minifyWhitespace: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Minify whitespace</span>
+                </label>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={settings.preserveIndentation}
+                    onChange={(e) => setSettings({...settings, preserveIndentation: e.target.checked})}
+                    className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                  />
+                  <span>Preserve indentation</span>
+                </label>
+              </div>
+              <div className="mt-6">
+                <label className="block text-sm font-medium mb-3">Custom Regex Pattern (optional)</label>
+                <input
+                  type="text"
+                  value={settings.customPatterns}
+                  onChange={(e) => setSettings({...settings, customPatterns: e.target.value})}
+                  placeholder="e.g., /TODO:.*$/gm"
+                  className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Language Selection */}
+          <div className="mb-6">
+            <label className="block text-sm font-medium mb-3">Language</label>
+            <CustomDropdown
+              value={selectedLanguage}
+              onChange={setSelectedLanguage}
+              options={languageOptions}
+              placeholder="Select a language"
+            />
+          </div>
+
+          {/* Main Content */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            {/* Input Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Input Code</h2>
+                <button
+                  onClick={clearAll}
+                  className="flex items-center space-x-2 px-4 py-2 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span>Clear</span>
+                </button>
+              </div>
+              <textarea
+                value={inputCode}
+                onChange={handleInputChange}
+                placeholder="Paste your code here..."
+                className="w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 font-mono text-sm resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+              />
+              <button
+                onClick={cleanComments}
+                className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                Clean Comments
+              </button>
+            </div>
+
+            {/* Output Section */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">Cleaned Code</h2>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={copyToClipboard}
+                    disabled={!outputCode}
+                    className="flex items-center space-x-2 px-4 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 rounded-lg hover:bg-green-200 dark:hover:bg-green-800 transition-colors disabled:opacity-50"
+                  >
+                    <Copy className="w-4 h-4" />
+                    <span>Copy</span>
+                  </button>
+                  <button
+                    onClick={downloadFile}
+                    disabled={!outputCode}
+                    className="flex items-center space-x-2 px-4 py-2 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-800 transition-colors disabled:opacity-50"
+                  >
+                    <Download className="w-4 h-4" />
+                    <span>Download</span>
+                  </button>
+                </div>
+              </div>
+              <textarea
+                value={outputCode}
+                readOnly
+                placeholder="Cleaned code will appear here..."
+                className="w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-800 font-mono text-sm resize-none"
+              />
+              {outputCode && (
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Original: {inputCode.split('\n').length} lines | Cleaned: {outputCode.split('\n').length} lines
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-12 pt-8 border-t border-gray-200 dark:border-gray-700">
+            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Supports 15+ programming languages with customizable cleaning options
+              </p>
+              <div className="flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
+                <span>Auto theme detection</span>
+                <span>•</span>
+                <span>Regex support</span>
+                <span>•</span>
+                <span>Custom dropdown</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default CodeCommentsCleaner;
