@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Comments Cleaner</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body {
+      @apply min-h-screen bg-white text-gray-900;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark {
+      @apply bg-gray-900 text-gray-100;
+    }
+    .dropdown-container {
+      @apply relative;
+    }
+    .dropdown-menu {
+      @apply absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg max-h-60 overflow-y-auto z-10;
+    }
+    .dropdown-item {
+      @apply w-full px-3 py-2 text-left hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors;
+    }
+    .dropdown-item.selected {
+      @apply bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400;
+    }
+    .checkbox-container {
+      @apply flex items-start space-x-3 cursor-pointer;
+    }
+    .checkbox-box {
+      @apply w-4 h-4 border-2 rounded transition-all;
+    }
+    .checkbox-box.checked {
+      @apply bg-blue-600 border-blue-600 dark:bg-blue-500 dark:border-blue-500;
+    }
+    .checkbox-box:not(.checked) {
+      @apply border-gray-300 dark:border-gray-600;
+    }
+    .checkbox-box svg {
+      @apply w-2 h-2 text-white absolute top-0.5 left-0.5;
+    }
+    textarea {
+      @apply w-full h-96 p-4 border border-gray-300 dark:border-gray-600 rounded-lg font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+    }
+    .settings-panel {
+      @apply mb-6 p-6 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700;
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen">
+    <!-- Header -->
+    <div class="bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div class="max-w-7xl mx-auto px-6 py-5">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <svg class="w-6 h-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
+            </div>
+            <h1 class="text-2xl font-semibold">Code Comments Cleaner</h1>
+          </div>
+          <div class="flex items-center space-x-3">
+            <button id="settings-toggle" class="p-2 rounded-lg border bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            </button>
+            <button id="theme-toggle" class="p-2 rounded-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <svg id="theme-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 py-6">
+      <!-- Settings Panel -->
+      <div id="settings-panel" class="hidden settings-panel">
+        <h3 class="text-lg font-semibold mb-5">Cleaning Options</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="remove-single-line" checked class="sr-only">
+                <div class="checkbox-box checked">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Remove single-line comments</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Remove // and # style comments</p>
+              </div>
+            </label>
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="remove-multi-line" checked class="sr-only">
+                <div class="checkbox-box checked">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Remove multi-line comments</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Remove /* */ and similar block comments</p>
+              </div>
+            </label>
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="remove-docstrings" class="sr-only">
+                <div class="checkbox-box">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Remove docstrings</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Remove documentation strings in Python, etc.</p>
+              </div>
+            </label>
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="preserve-headers" checked class="sr-only">
+                <div class="checkbox-box checked">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Preserve header comments</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Keep copyright and license headers</p>
+              </div>
+            </label>
+          </div>
+          <div class="space-y-4">
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="preserve-inline-comments" class="sr-only">
+                <div class="checkbox-box">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Preserve inline comments</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Keep comments on the same line as code</p>
+              </div>
+            </label>
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="minify-whitespace" class="sr-only">
+                <div class="checkbox-box">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Minify whitespace</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Remove extra blank lines and spaces</p>
+              </div>
+            </label>
+            <label class="checkbox-container group">
+              <div class="relative">
+                <input type="checkbox" id="preserve-indentation" checked class="sr-only">
+                <div class="checkbox-box checked">
+                  <svg fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                </div>
+              </div>
+              <div class="flex-1">
+                <span class="text-sm font-medium">Preserve indentation</span>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Keep original code indentation</p>
+              </div>
+            </label>
+          </div>
+        </div>
+        <div class="mt-6">
+          <label class="block text-sm font-medium mb-2">Custom Regex Pattern</label>
+          <input type="text" id="custom-patterns" placeholder="e.g., TODO:.*$" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Custom regex pattern for advanced comment removal</p>
+        </div>
+      </div>
+
+      <!-- Language Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium mb-2">Programming Language</label>
+        <div class="w-64 dropdown-container">
+          <button id="language-toggle" class="w-full flex items-center justify-between px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 transition-colors">
+            <span id="language-display" class="text-left">Auto Detect</span>
+            <svg id="language-chevron" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+          </button>
+          <div id="language-dropdown" class="hidden dropdown-menu"></div>
+        </div>
+      </div>
+
+      <!-- Main Content -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Input Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Input Code</h2>
+            <button id="clear-button" class="flex items-center space-x-2 px-3 py-1.5 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors border border-red-200 dark:border-red-800">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              <span>Clear</span>
+            </button>
+          </div>
+          <textarea id="input-code" placeholder="Paste your code here..." class="bg-white dark:bg-gray-800"></textarea>
+          <button id="clean-button" class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">Clean Comments</button>
+        </div>
+
+        <!-- Output Section -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold">Cleaned Code</h2>
+            <div class="flex space-x-2">
+              <button id="copy-button" class="flex items-center space-x-2 px-3 py-1.5 bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg hover:bg-green-100 dark:hover:bg-green-900/30 transition-colors border border-green-200 dark:border-green-800" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                <span>Copy</span>
+              </button>
+              <button id="download-button" class="flex items-center space-x-2 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/30 transition-colors border border-blue-200 dark:border-blue-800" disabled>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                <span>Download</span>
+              </button>
+            </div>
+          </div>
+          <textarea id="output-code" readonly placeholder="Cleaned code will appear here..." class="bg-gray-50 dark:bg-gray-800"></textarea>
+          <div id="stats-panel" class="hidden flex justify-between text-sm text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+            <span id="original-lines">Original: 0 lines</span>
+            <span id="cleaned-lines">Cleaned: 0 lines</span>
+            <span id="reduction">Reduction: 0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State management
+    let darkMode = localStorage.getItem('darkMode') === 'true' || (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    let inputCode = '';
+    let outputCode = '';
+    let selectedLanguage = 'auto';
+    let showSettings = false;
+    const settings = {
+      removeSingleLine: true,
+      removeMultiLine: true,
+      removeDocstrings: false,
+      preserveHeaders: true,
+      preserveInlineComments: false,
+      customPatterns: '',
+      minifyWhitespace: false,
+      preserveIndentation: true
+    };
+
+    // Language configurations
+    const languages = {
+      auto: { name: 'Auto Detect', single: ['//', '#'], multi: [['/*', '*/'], ['"""', '"""'], ["'''", "'"]], docstring: ['"""', "'''"] },
+      javascript: { name: 'JavaScript/TypeScript', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      python: { name: 'Python', single: ['#'], multi: [['"""', '"""'], ["'''", "'"]], docstring: ['"""', "'''"] },
+      java: { name: 'Java', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      cpp: { name: 'C/C++', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      csharp: { name: 'C#', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      php: { name: 'PHP', single: ['//', '#'], multi: [['/*', '*/']], docstring: [] },
+      ruby: { name: 'Ruby', single: ['#'], multi: [['=begin', '=end']], docstring: [] },
+      go: { name: 'Go', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      rust: { name: 'Rust', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      swift: { name: 'Swift', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      kotlin: { name: 'Kotlin', single: ['//'], multi: [['/*', '*/']], docstring: [] },
+      html: { name: 'HTML', single: [], multi: [['<!--', '-->']], docstring: [] },
+      css: { name: 'CSS', single: [], multi: [['/*', '*/']], docstring: [] },
+      sql: { name: 'SQL', single: ['--'], multi: [['/*', '*/']], docstring: [] },
+      bash: { name: 'Bash/Shell', single: ['#'], multi: [], docstring: [] },
+      powershell: { name: 'PowerShell', single: ['#'], multi: [['<#', '#>']], docstring: [] }
+    };
+
+    // DOM elements
+    const body = document.body;
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const settingsToggle = document.getElementById('settings-toggle');
+    const settingsPanel = document.getElementById('settings-panel');
+    const languageToggle = document.getElementById('language-toggle');
+    const languageDisplay = document.getElementById('language-display');
+    const languageDropdown = document.getElementById('language-dropdown');
+    const inputCodeEl = document.getElementById('input-code');
+    const outputCodeEl = document.getElementById('output-code');
+    const cleanButton = document.getElementById('clean-button');
+    const copyButton = document.getElementById('copy-button');
+    const downloadButton = document.getElementById('download-button');
+    const clearButton = document.getElementById('clear-button');
+    const statsPanel = document.getElementById('stats-panel');
+    const originalLines = document.getElementById('original-lines');
+    const cleanedLines = document.getElementById('cleaned-lines');
+    const reduction = document.getElementById('reduction');
+    const checkboxes = {
+      removeSingleLine: document.getElementById('remove-single-line'),
+      removeMultiLine: document.getElementById('remove-multi-line'),
+      removeDocstrings: document.getElementById('remove-docstrings'),
+      preserveHeaders: document.getElementById('preserve-headers'),
+      preserveInlineComments: document.getElementById('preserve-inline-comments'),
+      minifyWhitespace: document.getElementById('minify-whitespace'),
+      preserveIndentation: document.getElementById('preserve-indentation')
+    };
+    const customPatterns = document.getElementById('custom-patterns');
+
+    // Initialize dark mode
+    const initDarkMode = () => {
+      if (darkMode) {
+        body.classList.add('dark');
+        themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>';
+      } else {
+        body.classList.remove('dark');
+        themeIcon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>';
+      }
+      localStorage.setItem('darkMode', darkMode);
+    };
+    initDarkMode();
+
+    // Theme toggle
+    themeToggle.addEventListener('click', () => {
+      darkMode = !darkMode;
+      initDarkMode();
+    });
+
+    // System theme listener
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('darkMode')) {
+        darkMode = e.matches;
+        initDarkMode();
+      }
+    });
+
+    // Settings toggle
+    settingsToggle.addEventListener('click', () => {
+      showSettings = !showSettings;
+      settingsPanel.classList.toggle('hidden', !showSettings);
+      settingsToggle.classList.toggle('bg-blue-50', showSettings);
+      settingsToggle.classList.toggle('dark:bg-blue-900/20', showSettings);
+      settingsToggle.classList.toggle('border-blue-200', showSettings);
+      settingsToggle.classList.toggle('dark:border-blue-700', showSettings);
+      settingsToggle.classList.toggle('text-blue-600', showSettings);
+      settingsToggle.classList.toggle('dark:text-blue-400', showSettings);
+    });
+
+    // Language dropdown
+    const renderLanguageDropdown = () => {
+      languageDropdown.innerHTML = '';
+      Object.entries(languages).forEach(([key, option]) => {
+        const button = document.createElement('button');
+        button.className = `dropdown-item ${selectedLanguage === key ? 'selected' : ''}`;
+        button.textContent = option.name;
+        button.addEventListener('click', () => {
+          selectedLanguage = key;
+          languageDisplay.textContent = option.name;
+          languageDropdown.classList.add('hidden');
+          languageToggle.querySelector('svg').classList.remove('rotate-180');
+        });
+        languageDropdown.appendChild(button);
+      });
+    };
+    renderLanguageDropdown();
+
+    languageToggle.addEventListener('click', () => {
+      languageDropdown.classList.toggle('hidden');
+      languageToggle.querySelector('svg').classList.toggle('rotate-180');
+    });
+
+    // Close dropdown on outside click
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('.dropdown-container')) {
+        languageDropdown.classList.add('hidden');
+        languageToggle.querySelector('svg').classList.remove('rotate-180');
+      }
+    });
+
+    // Checkbox handling
+    Object.entries(checkboxes).forEach(([key, checkbox]) => {
+      checkbox.addEventListener('change', () => {
+        settings[key] = checkbox.checked;
+        checkbox.nextElementSibling.classList.toggle('checked', checkbox.checked);
+      });
+      checkbox.nextElementSibling.classList.toggle('checked', checkbox.checked);
+    });
+
+    // Custom patterns
+    customPatterns.addEventListener('input', () => {
+      settings.customPatterns = customPatterns.value;
+    });
+
+    // Auto-detect language
+    const detectLanguage = (code) => {
+      if (code.includes('<?php')) return 'php';
+      if (code.includes('def ') && code.includes(':')) return 'python';
+      if (code.includes('function') && code.includes('{')) return 'javascript';
+      if (code.includes('public class')) return 'java';
+      if (code.includes('#include')) return 'cpp';
+      if (code.includes('using System')) return 'csharp';
+      if (code.includes('<!DOCTYPE') || code.includes('<html')) return 'html';
+      if (code.includes('SELECT') || code.includes('FROM')) return 'sql';
+      if (code.includes('#!/bin/bash')) return 'bash';
+      return 'auto';
+    };
+
+    // Clean comments
+    const cleanComments = () => {
+      if (!inputCode.trim()) {
+        outputCode = '';
+        outputCodeEl.value = '';
+        statsPanel.classList.add('hidden');
+        copyButton.disabled = true;
+        downloadButton.disabled = true;
+        return;
+      }
+
+      let result = inputCode;
+      const lang = selectedLanguage === 'auto' ? detectLanguage(inputCode) : selectedLanguage;
+      const config = languages[lang] || languages.auto;
+
+      try {
+        // Remove single-line comments
+        if (settings.removeSingleLine) {
+          config.single.forEach(pattern => {
+            if (settings.preserveInlineComments) {
+              const regex = new RegExp(`^(\\s*)${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*$`, 'gm');
+              result = result.replace(regex, '');
+            } else {
+              const regex = new RegExp(`${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}.*$`, 'gm');
+              result = result.replace(regex, '');
+            }
+          });
+        }
+
+        // Remove multi-line comments
+        if (settings.removeMultiLine) {
+          config.multi.forEach(([start, end]) => {
+            if (settings.removeDocstrings || !config.docstring.includes(start)) {
+              const regex = new RegExp(
+                `${start.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${end.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+                'g'
+              );
+              result = result.replace(regex, '');
+            }
+          });
+        }
+
+        // Remove docstrings
+        if (settings.removeDocstrings) {
+          config.docstring.forEach(pattern => {
+            const regex = new RegExp(
+              `${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?${pattern.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`,
+              'g'
+            );
+            result = result.replace(regex, '');
+          });
+        }
+
+        // Apply custom patterns
+        if (settings.customPatterns) {
+          try {
+            const customRegex = new RegExp(settings.customPatterns, 'gm');
+            result = result.replace(customRegex, '');
+          } catch (e) {
+            console.warn('Invalid custom regex pattern');
+          }
+        }
+
+        // Clean up whitespace
+        if (settings.minifyWhitespace) {
+          result = result.replace(/\n\s*\n/g, '\n').trim();
+        } else {
+          result = result.replace(/^\s*\n/gm, '');
+        }
+
+        // Preserve indentation
+        if (!settings.preserveIndentation) {
+          result = result.replace(/^[ \t]+/gm, '');
+        }
+
+        outputCode = result;
+        outputCodeEl.value = result;
+        copyButton.disabled = !result;
+        downloadButton.disabled = !result;
+
+        // Update stats
+        const originalLineCount = inputCode.split('\n').length;
+        const cleanedLineCount = result.split('\n').length;
+        const reductionPercentage = ((originalLineCount - cleanedLineCount) / originalLineCount * 100).toFixed(1);
+        originalLines.textContent = `Original: ${originalLineCount} lines`;
+        cleanedLines.textContent = `Cleaned: ${cleanedLineCount} lines`;
+        reduction.textContent = `Reduction: ${reductionPercentage}%`;
+        statsPanel.classList.remove('hidden');
+      } catch (error) {
+        console.error('Error cleaning comments:', error);
+        outputCodeEl.value = 'Error processing code. Please check your input.';
+        copyButton.disabled = true;
+        downloadButton.disabled = true;
+        statsPanel.classList.add('hidden');
+      }
+    };
+
+    // Input handling
+    inputCodeEl.addEventListener('input', () => {
+      inputCode = inputCodeEl.value;
+    });
+
+    // Clean button
+    cleanButton.addEventListener('click', cleanComments);
+
+    // Copy to clipboard
+    copyButton.addEventListener('click', () => {
+      navigator.clipboard.writeText(outputCode);
+    });
+
+    // Download file
+    downloadButton.addEventListener('click', () => {
+      const blob = new Blob([outputCode], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'cleaned_code.txt';
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    // Clear all
+    clearButton.addEventListener('click', () => {
+      inputCode = '';
+      outputCode = '';
+      inputCodeEl.value = '';
+      outputCodeEl.value = '';
+      statsPanel.classList.add('hidden');
+      copyButton.disabled = true;
+      downloadButton.disabled = true;
+    });
+  </script>
+</body>
+</html>
