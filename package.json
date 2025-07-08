@@ -1,0 +1,23 @@
+{
+  "name": "my-app",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
+    "lucide-react": "^0.170.0"       /* for Moon, Sun, etc. */,
+    "tailwindcss": "^3.0.0"          /* if you’re using Tailwind */
+  },
+  "devDependencies": {
+    "postcss": "^8.0.0",
+    "autoprefixer": "^10.0.0",
+    "gh-pages": "^5.0.0"             /* if you plan to deploy */
+  },
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
+  },
+  "homepage": "https://<your-username>.github.io/<your-repo>"
+}
